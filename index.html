@@ -2,239 +2,171 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f7f9fc">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Touch Monitor">
-  <meta name="description" content="아이폰 터치 좌표를 실시간으로 확인하는 무료 웹앱">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="icon" type="image/png" href="./icon-192.png">
   <title>Touch Monitor</title>
   <style>
-    :root { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#182334; background:#f7f9fc; font-synthesis:none; }
+    :root { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#243247; background:white; }
     * { box-sizing:border-box; }
-    html { height:100%; }
-    body { margin:0; min-height:100%; overscroll-behavior:none; }
-    button { font:inherit; cursor:pointer; }
-    .app { max-width:780px; min-height:100svh; margin:auto; padding: max(20px,env(safe-area-inset-top)) 18px max(20px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; gap:14px; }
-    header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .heading {display:flex; align-items:center;gap:10px}
-    .logo { width:38px;height:38px;border-radius:13px; background:#1378e8;display:grid;place-items:center;color:#fff;font-weight:800;font-size:21px;box-shadow:0 5px 14px #1378e826; }
-    h1 {font-size:19px;letter-spacing:-.6px;margin:0 0 2px;font-weight:750}
-    .sub {font-size:11px;color:#788495;margin:0}
-    .tag {font-size:11px;color:#08735e;background:#e1f7ef;border-radius:25px;padding:7px 10px;font-weight:650;white-space:nowrap}
-    .stats { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
-    .stat { background:#fff;border:1px solid #e7eaf0;border-radius:17px;padding:13px 15px; min-width:0; }
-    .key {font-size:11px;color:#788495;font-weight:650;letter-spacing:.2px}
-    .val {font-size:clamp(24px,7.5vw,38px);line-height:1.15;font-variant-numeric:tabular-nums;letter-spacing:-1.4px;font-weight:770;margin-top:5px;overflow:hidden;text-overflow:ellipsis}
-    .coord-unit {font-size:12px;color:#8b96a5;font-weight:500;margin-left:5px}
-    .metrics {display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:#687689;padding:0 2px}
-    .metrics strong {color:#182334;font-variant-numeric:tabular-nums}
-    .board {position:relative; flex:1 0 auto; height:min(49svh,480px); min-height:240px; border:1.5px solid #cfe1f8; border-radius:20px; background-color:#fdfefe; background-image:linear-gradient(#edf3fb 1px,transparent 1px),linear-gradient(90deg,#edf3fb 1px,transparent 1px);background-size:24px 24px; overflow:hidden; touch-action:none; -webkit-user-select:none;user-select:none;-webkit-touch-callout:none; }
-    canvas {position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-    .dots {position:absolute;inset:0;pointer-events:none}
-    .dot {position:absolute;transform:translate(-50%,-50%);width:25px;height:25px; border:3px solid #fff; border-radius:50%;box-shadow:0 0 0 2px var(--dot-color),0 2px 8px #0002;background:var(--dot-color);}
-    .dot::after { content:attr(data-id);position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;background:#182334;color:#fff;border-radius:6px;padding:3px 6px;white-space:nowrap;}
-    .hint {position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#7d94b1;pointer-events:none;transition:opacity .18s;}
-    .hint svg {opacity:.8}
-    .hint strong {font-size:17px;color:#5d7797}
-    .hint span {font-size:12px}
-    .board.interacted .hint {opacity:0}
-    .foot {background:#fff;border:1px solid #e7eaf0;border-radius:17px;padding:13px 14px;display:flex;flex-direction:column;gap:10px}
-    .foot-head {display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .foot-title {font-size:12px;font-weight:750}
-    .foot-help {font-size:11px;color:#8b96a5}
-    .touch-list {display:flex;gap:6px;flex-wrap:wrap;min-height:24px;font-size:12px;color:#8693a3;align-items:center}
-    .touch-chip {display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:8px;background:#f2f6fb;color:#36485f;font-weight:600;font-variant-numeric:tabular-nums}
-    .touch-dot {width:7px;height:7px;border-radius:50%;background:var(--touch-color)}
-    .actions {display:flex;gap:8px}
-    .actions button {flex:1;border-radius:12px;padding:11px 8px;font-weight:650;font-size:13px;border:1px solid #dbe4ee;background:white;color:#2e415a}
-    .actions button.primary {background:#1378e8;border-color:#1378e8;color:white}
-    .note {font-size:11px;line-height:1.45;color:#8994a1;text-align:center;}
-    @media (max-height:690px) { .app{gap:9px;padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))} .stat{padding:10px 13px} .board{min-height:210px;height:41svh} .foot{padding:10px 12px;gap:7px} .note{display:none} }
+    html,body { width:100%; height:100%; margin:0; overflow:hidden; overscroll-behavior:none; }
+    .app { width:100%; height:100vh; height:100dvh; display:flex; flex-direction:column;
+      padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+    header { flex:none; height:48px; padding:0 14px; display:flex; align-items:center;
+      justify-content:space-between; border-bottom:1px solid #e9edf1; }
+    header span { font-size:14px; font-weight:700; letter-spacing:-.3px; }
+    button { border:1px solid #dce3ec; background:white; color:#26364d; border-radius:9px;
+      padding:7px 13px; font-size:13px; font-weight:600; font-family:inherit; cursor:pointer; }
+    button:active { background:#edf2fa; }
+    #board { position:relative; flex:1; min-height:0; overflow:hidden; background:#fff;
+      touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+    canvas { display:block; width:100%; height:100%; pointer-events:none; }
   </style>
 </head>
 <body>
-<main class="app">
-  <header>
-    <div class="heading"><div class="logo">T</div><div><h1>Touch Monitor</h1><p class="sub">iPhone Touch Coordinate Viewer</p></div></div>
-    <span class="tag">● LIVE</span>
-  </header>
+  <main class="app">
+    <header>
+      <span>Touch Monitor</span>
+      <button id="reset" type="button">초기화</button>
+    </header>
+    <section id="board" aria-label="터치 궤적 영역">
+      <canvas id="trail" aria-hidden="true"></canvas>
+    </section>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      const board = document.getElementById('board');
+      const canvas = document.getElementById('trail');
+      const ctx = canvas.getContext('2d');
+      // Key: Touch.identifier (브라우저 Touch ID). Release 뒤에도 경로는 남긴다.
+      const paths = new Map();
+      const colors = ['#2563eb', '#e54870', '#0b9f78', '#9958d4', '#dd8527', '#0896af', '#d65a4a'];
+      let renderQueued = false;
 
-  <section class="stats" aria-label="마지막 터치 좌표">
-    <div class="stat"><div class="key">X COORDINATE</div><div class="val"><span id="x">—</span><span class="coord-unit">px</span></div></div>
-    <div class="stat"><div class="key">Y COORDINATE</div><div class="val"><span id="y">—</span><span class="coord-unit">px</span></div></div>
-  </section>
-
-  <div class="metrics"><span>현재 터치 <strong id="count">0</strong>개</span><span>이벤트 <strong id="phase">대기</strong></span><span>샘플 <strong id="samples">0</strong>개</span></div>
-
-  <section class="board" id="board" aria-label="터치 좌표 측정 영역">
-    <canvas id="trail" aria-hidden="true"></canvas>
-    <div class="dots" id="dots"></div>
-    <div class="hint" id="hint">
-      <svg width="42" height="42" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 29V12a4 4 0 0 1 8 0v13m0-6a4 4 0 0 1 8 0v15c0 6-4 9-11 9H20c-4 0-7-2-9-6L5 26a4 4 0 0 1 7-4l7 8V16a4 4 0 0 1 8 0" stroke="#7d94b1" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <strong>여기를 터치해 보세요</strong>
-      <span>한 손가락 또는 여러 손가락으로 움직여 보세요</span>
-    </div>
-  </section>
-
-  <section class="foot">
-    <div class="foot-head"><span class="foot-title">활성 터치 좌표</span><span class="foot-help">화면 기준 CSS px</span></div>
-    <div class="touch-list" id="touchList" aria-live="off">터치 중인 손가락이 없습니다.</div>
-    <div class="actions"><button id="reset" type="button">초기화</button><button id="save" class="primary" type="button">CSV 저장</button></div>
-  </section>
-  <div class="note">앱 안의 파란 테두리 영역에서만 측정합니다. IC Raw 데이터가 아닌 브라우저 터치 좌표입니다.<br>데이터는 기기에만 임시 보관되며 서버로 전송되지 않습니다.</div>
-</main>
-<script>
-(() => {
-  'use strict';
-  const board = document.getElementById('board');
-  const dots = document.getElementById('dots');
-  const touchList = document.getElementById('touchList');
-  const canvas = document.getElementById('trail');
-  const ctx = canvas.getContext('2d');
-  const xEl = document.getElementById('x');
-  const yEl = document.getElementById('y');
-  const countEl = document.getElementById('count');
-  const phaseEl = document.getElementById('phase');
-  const samplesEl = document.getElementById('samples');
-  const active = new Map();
-  const paths = new Map();
-  const colors = ['#1678ed','#f15d7a','#00a887','#b779e8','#ef922a','#21a9c4'];
-  let collected = [];
-  let sampleCount = 0;
-  let fingerSerial = 0;
-  let latestClient = null;
-  let renderQueued = false;
-
-  function colorFor(serial) { return colors[(serial - 1) % colors.length]; }
-  function local(t, rect) { return { x:t.clientX-rect.left, y:t.clientY-rect.top }; }
-  function formatCoord(n) { return Number(n).toFixed(1); }
-  function scheduleRender() {
-    if (renderQueued) return;
-    renderQueued = true;
-    requestAnimationFrame(() => { renderQueued = false; render(); });
-  }
-  function resizeCanvas() {
-    const r = board.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    canvas.width = Math.max(1, Math.round(r.width * dpr));
-    canvas.height = Math.max(1, Math.round(r.height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    scheduleRender();
-  }
-  function render() {
-    const rect = board.getBoundingClientRect();
-    ctx.clearRect(0, 0, rect.width, rect.height);
-    paths.forEach(({color, points}) => {
-      if (points.length < 2) return;
-      ctx.beginPath(); ctx.lineWidth = 2.5; ctx.lineJoin = 'round';ctx.lineCap = 'round';ctx.strokeStyle = color;
-      points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
-      ctx.stroke();
-    });
-    dots.replaceChildren();
-    touchList.replaceChildren();
-    if (!active.size) touchList.textContent = '터치 중인 손가락이 없습니다.';
-    for (const state of active.values()) {
-      const marker = document.createElement('div');
-      marker.className = 'dot';
-      marker.style.setProperty('--dot-color', colorFor(state.serial));
-      marker.style.left = state.localX + 'px';
-      marker.style.top = state.localY + 'px';
-      marker.dataset.id = '#' + state.serial;
-      dots.appendChild(marker);
-      const chip = document.createElement('div');
-      chip.className = 'touch-chip';
-      const circle = document.createElement('span');
-      circle.className = 'touch-dot';
-      circle.style.setProperty('--touch-color', colorFor(state.serial));
-      chip.appendChild(circle);
-      chip.appendChild(document.createTextNode('#'+state.serial+' ('+formatCoord(state.x)+', '+formatCoord(state.y)+')'));
-      touchList.appendChild(chip);
-    }
-    countEl.textContent = String(active.size);
-    samplesEl.textContent = sampleCount.toLocaleString('ko-KR');
-    if (latestClient) {
-      xEl.textContent = formatCoord(latestClient.x);
-      yEl.textContent = formatCoord(latestClient.y);
-    }
-  }
-  function addSample(t, phase, timestamp, rect) {
-    let state = active.get(t.identifier);
-    if (!state) {
-      state = {serial:++fingerSerial};
-      active.set(t.identifier, state);
-    }
-    const point = local(t, rect);
-    state.x = t.clientX;
-    state.y = t.clientY;
-    state.localX = point.x;
-    state.localY = point.y;
-    latestClient = {x:t.clientX, y:t.clientY};
-    let path = paths.get(t.identifier);
-    if (!path) { path = {color:colorFor(state.serial), points:[]}; paths.set(t.identifier, path); }
-    path.points.push(point);
-    if (path.points.length > 1000) path.points.shift();
-    ++sampleCount;
-    if (collected.length < 20000) {
-      collected.push([new Date().toISOString(), timestamp.toFixed(2), state.serial, phase,
-        t.clientX.toFixed(2), t.clientY.toFixed(2), point.x.toFixed(2), point.y.toFixed(2),
-        (t.radiusX ?? '').toString(), (t.radiusY ?? '').toString()]);
-    }
-  }
-  function handleTouch(event, phase) {
-    if (event.cancelable) event.preventDefault();
-    board.classList.add('interacted');
-    const rect = board.getBoundingClientRect();
-    for (const t of event.changedTouches) {
-      addSample(t, phase, event.timeStamp, rect);
-      if (phase === 'END' || phase === 'CANCEL') active.delete(t.identifier);
-    }
-    phaseEl.textContent = phase;
-    scheduleRender();
-  }
-  for (const [eventName, phase] of [['touchstart','DOWN'],['touchmove','MOVE'],['touchend','END'],['touchcancel','CANCEL']]) {
-    board.addEventListener(eventName, e => handleTouch(e, phase), {passive:false});
-  }
-  // A mouse fallback makes it testable on a Windows browser, too.
-  let mouseDown = false;
-  board.addEventListener('mousedown', e => { if (e.button!==0) return; mouseDown=true; handleMouse(e,'DOWN'); });
-  window.addEventListener('mousemove', e => { if(mouseDown) handleMouse(e,'MOVE'); });
-  window.addEventListener('mouseup', e => { if(mouseDown) {handleMouse(e,'END'); mouseDown=false;} });
-  function handleMouse(e, phase) {
-    // On touch devices compatibility mouse events can fire after touch. Ignore those events.
-    if (window.matchMedia('(pointer:coarse)').matches) return;
-    if (e.cancelable && e.target===board) e.preventDefault();
-    board.classList.add('interacted');
-    const rect = board.getBoundingClientRect();
-    const fake = {identifier:'mouse',clientX:e.clientX,clientY:e.clientY,radiusX:'',radiusY:''};
-    addSample(fake,phase,e.timeStamp,rect);
-    if (phase==='END') active.delete('mouse');
-    phaseEl.textContent=phase; scheduleRender();
-  }
-  document.getElementById('reset').addEventListener('click', () => {
-    active.clear();paths.clear();collected=[];sampleCount=0;fingerSerial=0;latestClient=null;
-    xEl.textContent='—';yEl.textContent='—';phaseEl.textContent='대기';
-    board.classList.remove('interacted');scheduleRender();
-  });
-  document.getElementById('save').addEventListener('click', () => {
-    if(!collected.length) {alert('먼저 터치 좌표를 수집해 주세요.');return;}
-    const rows = [['ISO_time','event_time_ms','touch_id','phase','clientX_csspx','clientY_csspx','localX_csspx','localY_csspx','radiusX_csspx','radiusY_csspx'], ...collected];
-    const text = '\uFEFF' + rows.map(row=>row.join(',')).join('\r\n');
-    const blob=new Blob([text],{type:'text/csv;charset=utf-8'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download='touch_log_'+new Date().toISOString().replace(/[:.]/g,'-')+'.csv';
-    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
-  });
-  window.addEventListener('resize', resizeCanvas);
-  if ('ResizeObserver' in window) new ResizeObserver(resizeCanvas).observe(board);
-  resizeCanvas();
-  if ('serviceWorker' in navigator && location.protocol==='https:') {
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-  }
-})();
-</script>
+      function getColor(id) {
+        if (typeof id === 'number') return colors[((id % colors.length) + colors.length) % colors.length];
+        return colors[0];
+      }
+      function pointOf(clientX, clientY) {
+        const r = board.getBoundingClientRect();
+        return {
+          x: Math.max(0, Math.min(r.width, clientX - r.left)),
+          y: Math.max(0, Math.min(r.height, clientY - r.top))
+        };
+      }
+      function updatePath(id, clientX, clientY, phase) {
+        // 이전 터치가 release된 뒤 같은 identifier가 다시 들어오면 이전 자취를 즉시 삭제.
+        if (phase === 'start' || !paths.has(id)) {
+          paths.set(id, { id:String(id), color:getColor(id), points:[], active:true });
+        }
+        const path = paths.get(id);
+        path.points.push(pointOf(clientX,clientY));
+        if (path.points.length > 3000) path.points.shift();
+        path.active = phase !== 'end' && phase !== 'cancel';
+        scheduleRender();
+      }
+      function scheduleRender() {
+        if (renderQueued) return;
+        renderQueued = true;
+        requestAnimationFrame(() => { renderQueued = false; render(); });
+      }
+      function drawIdLabel(x,y,label,color,w,h) {
+        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, sans-serif';
+        const text = 'ID ' + label;
+        const bw = Math.ceil(ctx.measureText(text).width) + 15;
+        const bh = 23;
+        const bx = Math.max(4, Math.min(w - bw - 4, x + 12));
+        const by = Math.max(4, Math.min(h - bh - 4, y - 32));
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.roundRect(bx,by,bw,bh,6);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text,bx+7,by+bh/2);
+      }
+      function render() {
+        const r = board.getBoundingClientRect();
+        ctx.clearRect(0,0,r.width,r.height);
+        for (const path of paths.values()) {
+          const points = path.points;
+          if (!points.length) continue;
+          ctx.strokeStyle = path.color;
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          if (points.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(points[0].x,points[0].y);
+            for (let i=1;i<points.length;i++) ctx.lineTo(points[i].x,points[i].y);
+            ctx.stroke();
+          }
+          const last = points[points.length-1];
+          ctx.beginPath();
+          ctx.arc(last.x,last.y,path.active ? 6 : 4,0,Math.PI*2);
+          ctx.fillStyle = path.color;
+          ctx.fill();
+          if (path.active) {
+            ctx.beginPath();
+            ctx.arc(last.x,last.y,9,0,Math.PI*2);
+            ctx.lineWidth = 1.4;
+            ctx.strokeStyle = path.color;
+            ctx.stroke();
+          }
+          drawIdLabel(last.x,last.y,path.id,path.color,r.width,r.height);
+        }
+      }
+      function resize() {
+        const r = board.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1,3);
+        canvas.width = Math.max(1,Math.round(r.width*dpr));
+        canvas.height = Math.max(1,Math.round(r.height*dpr));
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        scheduleRender();
+      }
+      for (const [eventName,phase] of [
+        ['touchstart','start'], ['touchmove','move'],
+        ['touchend','end'], ['touchcancel','cancel']
+      ]) {
+        board.addEventListener(eventName, event => {
+          if (event.cancelable) event.preventDefault();
+          for (const touch of event.changedTouches) {
+            updatePath(touch.identifier,touch.clientX,touch.clientY,phase);
+          }
+        }, {passive:false});
+      }
+      // Windows 브라우저에서 마우스로 간단히 시험 가능.
+      let mouseDown = false;
+      board.addEventListener('mousedown', event => {
+        if (event.button !== 0 || window.matchMedia('(pointer:coarse)').matches) return;
+        mouseDown = true;
+        updatePath('M',event.clientX,event.clientY,'start');
+      });
+      window.addEventListener('mousemove', event => {
+        if (mouseDown) updatePath('M',event.clientX,event.clientY,'move');
+      });
+      window.addEventListener('mouseup', event => {
+        if (!mouseDown) return;
+        mouseDown = false;
+        updatePath('M',event.clientX,event.clientY,'end');
+      });
+      document.getElementById('reset').addEventListener('click', () => {
+        paths.clear();
+        mouseDown = false;
+        scheduleRender();
+      });
+      window.addEventListener('resize',resize);
+      if ('ResizeObserver' in window) new ResizeObserver(resize).observe(board);
+      resize();
+      if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+      }
+    })();
+  </script>
 </body>
 </html>
